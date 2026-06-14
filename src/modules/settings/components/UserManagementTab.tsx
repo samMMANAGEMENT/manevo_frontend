@@ -11,6 +11,7 @@ export default function UserManagementTab() {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     // Form state
     const [formData, setFormData] = useState({
@@ -45,6 +46,7 @@ export default function UserManagementTab() {
     };
 
     const handleEdit = (user: User) => {
+        setError(null);
         setFormData({
             id: user.id,
             name: user.name,
@@ -62,12 +64,13 @@ export default function UserManagementTab() {
         e.preventDefault();
         try {
             setSaving(true);
+            setError(null);
             await userManagementService.saveUser(formData);
             await loadData();
             setIsModalOpen(false);
-        } catch (error: any) {
-            console.error('Error guardando usuario:', error);
-            alert(error.response?.data?.message || 'Error al guardar el usuario');
+        } catch (err: any) {
+            console.error('Error guardando usuario:', err);
+            setError(err.response?.data?.message || 'Error al guardar el usuario');
         } finally {
             setSaving(false);
         }
@@ -82,6 +85,7 @@ export default function UserManagementTab() {
                 </div>
                 <Button
                     onClick={() => {
+                        setError(null);
                         setFormData({
                             id: undefined,
                             name: '',
@@ -171,6 +175,12 @@ export default function UserManagementTab() {
                 title={formData.id ? "Editar Usuario" : "Crear Nuevo Usuario"}
             >
                 <form onSubmit={handleSave} className="space-y-5 md:space-y-6">
+                    {error && (
+                        <div className="bg-rose-50 border border-rose-100 text-rose-600 px-4 py-3 rounded-2xl text-xs font-semibold flex items-center gap-2 animate-scale-in">
+                            <span className="material-symbols-outlined text-[16px]">error</span>
+                            {error}
+                        </div>
+                    )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <Input
                             label="Nombre Completo"
