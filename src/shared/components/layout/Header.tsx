@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useAuth } from '../../providers/AuthProvider';
+import { useToast } from '../../providers/ToastProvider';
 import { useCan } from '../../hooks/useCan';
 import entityService, { type Entity } from '../../../modules/settings/services/entityService';
 import { Select } from '../ui/Select';
@@ -16,6 +17,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
     const location = useLocation();
     const { user } = useAuth();
     const { can } = useCan();
+    const { showToast } = useToast();
     
     const [entities, setEntities] = useState<Entity[]>([]);
     const [switching, setSwitching] = useState(false);
@@ -65,7 +67,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
             window.location.reload();
         } catch (error) {
             console.error('Error al cambiar de entidad:', error);
-            alert('No se pudo cambiar de entidad de trabajo.');
+            showToast('No se pudo cambiar de entidad de trabajo.', 'error');
         } finally {
             setSwitching(false);
         }
@@ -89,7 +91,7 @@ export default function Header({ onMenuClick }: HeaderProps) {
             setMessage('');
         } catch (error) {
             console.error('Error al enviar feedback:', error);
-            alert('Hubo un error al enviar el comentario.');
+            showToast('Hubo un error al enviar el comentario.', 'error');
         } finally {
             setIsSubmitting(false);
         }

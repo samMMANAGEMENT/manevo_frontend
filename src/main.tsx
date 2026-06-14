@@ -5,13 +5,16 @@ import { router } from './router/router.tsx'
 import './index.css'
 
 import { AuthProvider } from './shared/providers/AuthProvider.tsx'
+import { ToastProvider } from './shared/providers/ToastProvider.tsx'
 import ManevoPreloader from './shared/components/ui/Preload.tsx'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <AuthProvider>
-      <RouterProvider router={router} />
-      <ManevoPreloader global />
+      <ToastProvider>
+        <RouterProvider router={router} />
+        <ManevoPreloader global />
+      </ToastProvider>
     </AuthProvider>
   </StrictMode>,
 )

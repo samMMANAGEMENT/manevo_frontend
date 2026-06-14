@@ -5,12 +5,14 @@ import { Modal } from '../../../shared/components/ui/Modal';
 import inventoryService from '../../inventory/services/inventoryService';
 import salesService from '../services/salesService';
 import type { Product } from '../../inventory/types/inventoryType';
+import { useToast } from '../../../shared/providers/ToastProvider';
 
 interface CartItem extends Product {
     cartQuantity: number;
 }
 
 export default function PosPage() {
+    const { showToast } = useToast();
     const [products, setProducts] = useState<Product[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -105,10 +107,10 @@ export default function PosPage() {
             // Reload products to update stock
             loadProducts();
 
-            alert('Venta procesada con éxito');
+            showToast('Venta procesada con éxito', 'success');
         } catch (error: any) {
             console.error('Error al procesar venta:', error);
-            alert('Error: ' + (error.response?.data?.error || error.message));
+            showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
         } finally {
             setProcessingSale(false);
         }

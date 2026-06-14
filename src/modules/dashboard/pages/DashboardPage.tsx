@@ -4,8 +4,10 @@ import paymentService from '../../payments/services/paymentService';
 import { Button } from '../../../shared/components/ui/Button';
 import { Modal } from '../../../shared/components/ui/Modal';
 import { Select } from '../../../shared/components/ui/Select';
+import { useToast } from '../../../shared/providers/ToastProvider';
 
 export default function DashboardPage() {
+    const { showToast } = useToast();
     const [summary, setSummary] = useState<DashboardSummary | null>(null);
     const [loading, setLoading] = useState(true);
     const [loadingDaily, setLoadingDaily] = useState(false);
@@ -68,7 +70,7 @@ export default function DashboardPage() {
         e.preventDefault();
         if (!quickPayData) return;
         if (finalQuickPayAmount <= 0) {
-            alert('El monto del pago debe ser mayor a 0');
+            showToast('El monto del pago debe ser mayor a 0', 'error');
             return;
         }
 
@@ -85,10 +87,11 @@ export default function DashboardPage() {
             });
             setQuickPayOpen(false);
             setQuickPayData(null);
+            showToast('Pago rápido registrado con éxito', 'success');
             loadDashboard();
         } catch (error) {
             console.error('Error al registrar pago rápido:', error);
-            alert('Error al registrar pago rápido');
+            showToast('Error al registrar pago rápido', 'error');
         } finally {
             setQuickPaySaving(false);
         }

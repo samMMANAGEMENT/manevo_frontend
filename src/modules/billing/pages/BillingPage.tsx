@@ -6,8 +6,10 @@ import { Select } from '../../../shared/components/ui/Select';
 import billingModuleService from '../services/billingModuleService';
 import customerService, { type Customer } from '../../settings/services/customerService';
 import type { PendingBillingItem, Invoice } from '../types/billingType';
+import { useToast } from '../../../shared/providers/ToastProvider';
 
 export default function BillingPage() {
+    const { showToast } = useToast();
     const [pendingItems, setPendingItems] = useState<PendingBillingItem[]>([]);
     const [invoices, setInvoices] = useState<Invoice[]>([]);
     const [customers, setCustomers] = useState<Customer[]>([]);
@@ -78,13 +80,13 @@ export default function BillingPage() {
                 total: totalToInvoice
             });
 
-            alert('Factura enviada con éxito');
+            showToast('Factura enviada con éxito', 'success');
             setSelectedIds([]);
             setShowInvoiceModal(false);
             loadData();
         } catch (error: any) {
             console.error('Error al crear factura:', error);
-            alert('Error: ' + (error.response?.data?.error || error.message));
+            showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
         } finally {
             setProcessing(false);
         }

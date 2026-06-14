@@ -3,8 +3,10 @@ import { Button } from '../../../shared/components/ui/Button';
 import { Input } from '../../../shared/components/ui/Input';
 import { Select } from '../../../shared/components/ui/Select';
 import billingService, { type BillingConfig } from '../services/billingService';
+import { useToast } from '../../../shared/providers/ToastProvider';
 
 export default function BillingManagementTab() {
+    const { showToast } = useToast();
     const [config, setConfig] = useState<BillingConfig>({
         razon_social: '',
         document_type: 'NIT',
@@ -69,10 +71,10 @@ export default function BillingManagementTab() {
         try {
             setSaving(true);
             await billingService.saveBillingConfig(config);
-            alert('Configuración guardada exitosamente');
+            showToast('Configuración guardada exitosamente', 'success');
         } catch (error: any) {
             console.error('Error guardando configuración:', error);
-            alert(error.response?.data?.message || 'Error al guardar configuración');
+            showToast(error.response?.data?.message || 'Error al guardar configuración', 'error');
         } finally {
             setSaving(false);
         }

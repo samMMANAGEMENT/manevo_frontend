@@ -3,8 +3,10 @@ import { Button } from '../../../shared/components/ui/Button';
 import { Input } from '../../../shared/components/ui/Input';
 import { Select } from '../../../shared/components/ui/Select';
 import customerService, { type Customer } from '../services/customerService';
+import { useToast } from '../../../shared/providers/ToastProvider';
 
 export default function CustomerManagementTab() {
+    const { showToast } = useToast();
     const [customers, setCustomers] = useState<Customer[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -50,9 +52,9 @@ export default function CustomerManagementTab() {
             }
             resetForm();
             loadCustomers();
-            alert(editingId ? 'Cliente actualizado' : 'Cliente creado');
+            showToast(editingId ? 'Cliente actualizado' : 'Cliente creado', 'success');
         } catch (error: any) {
-            alert(error.response?.data?.message || 'Error al guardar cliente');
+            showToast(error.response?.data?.message || 'Error al guardar cliente', 'error');
         } finally {
             setSaving(false);
         }
@@ -69,8 +71,9 @@ export default function CustomerManagementTab() {
         try {
             await customerService.eliminarCliente(id);
             loadCustomers();
+            showToast('Cliente eliminado exitosamente', 'success');
         } catch (error) {
-            alert('Error al eliminar cliente');
+            showToast('Error al eliminar cliente', 'error');
         }
     };
 

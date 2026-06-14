@@ -7,8 +7,10 @@ import paymentService from '../services/paymentService';
 import operatorService from '../../operator/services/operatorService';
 import type { OperatorPayment, PendingCommission } from '../types/payment';
 import type { Operator } from '../../operator/types/operatorType';
+import { useToast } from '../../../shared/providers/ToastProvider';
 
 export default function PaymentsPage() {
+    const { showToast } = useToast();
     const [payments, setPayments] = useState<OperatorPayment[]>([]);
     const [operators, setOperators] = useState<Operator[]>([]);
     const [pendingCommissions, setPendingCommissions] = useState<PendingCommission[]>([]);
@@ -96,11 +98,11 @@ export default function PaymentsPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (selectedOperatorId <= 0) {
-            alert('Por favor selecciona un operador');
+            showToast('Por favor selecciona un operador', 'error');
             return;
         }
         if (finalAmount <= 0) {
-            alert('El monto del pago debe ser mayor a 0');
+            showToast('El monto del pago debe ser mayor a 0', 'error');
             return;
         }
 
@@ -128,10 +130,11 @@ export default function PaymentsPage() {
             setFreeAmount(0);
             setSelectedPerfIds([]);
 
+            showToast('Pago registrado con éxito', 'success');
             loadData();
         } catch (error) {
             console.error('Error al guardar el pago:', error);
-            alert('Error al guardar el pago');
+            showToast('Error al guardar el pago', 'error');
         } finally {
             setIsSaving(false);
         }
@@ -141,9 +144,11 @@ export default function PaymentsPage() {
         if (!confirm('¿Estás seguro de eliminar este registro de pago? Se revertirán los servicios enlazados como no pagados.')) return;
         try {
             await paymentService.deletePayment(id);
+            showToast('Pago eliminado correctamente', 'success');
             loadData();
         } catch (error) {
             console.error('Error al eliminar pago:', error);
+            showToast('Error al eliminar el pago', 'error');
         }
     };
 

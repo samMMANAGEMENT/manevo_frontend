@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { Button } from '../../../shared/components/ui/Button';
 import { Input } from '../../../shared/components/ui/Input';
 import entityService, { type Entity } from '../services/entityService';
+import { useToast } from '../../../shared/providers/ToastProvider';
 
 export default function WorkspaceManagementTab() {
+    const { showToast } = useToast();
     const [entity, setEntity] = useState<Entity | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -34,10 +36,10 @@ export default function WorkspaceManagementTab() {
                 name: entity.name,
                 description: entity.description
             });
-            alert('Información del workspace actualizada correctamente');
+            showToast('Información del workspace actualizada correctamente', 'success');
         } catch (error) {
             console.error('Error actualizando workspace:', error);
-            alert('Error al actualizar la información del workspace');
+            showToast('Error al actualizar la información del workspace', 'error');
         } finally {
             setSaving(false);
         }

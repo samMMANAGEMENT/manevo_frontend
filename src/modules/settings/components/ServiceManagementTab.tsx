@@ -4,8 +4,10 @@ import { Input } from '../../../shared/components/ui/Input';
 import { Modal } from '../../../shared/components/ui/Modal';
 import servicesModuleService from '../../services/services/servicesModuleService';
 import type { MasterService } from '../../services/types/servicesType';
+import { useToast } from '../../../shared/providers/ToastProvider';
 
 export default function ServiceManagementTab() {
+    const { showToast } = useToast();
     const [services, setServices] = useState<MasterService[]>([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -42,9 +44,10 @@ export default function ServiceManagementTab() {
             await loadServices();
             setIsModalOpen(false);
             setEditingService(null);
+            showToast('Servicio guardado exitosamente', 'success');
         } catch (error) {
             console.error('Error guardando servicio:', error);
-            alert('Error al guardar el servicio');
+            showToast('Error al guardar el servicio', 'error');
         } finally {
             setSaving(false);
         }

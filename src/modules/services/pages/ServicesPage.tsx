@@ -7,6 +7,7 @@ import servicesModuleService from '../services/servicesModuleService';
 import operatorService from '../../operator/services/operatorService';
 import type { MasterService } from '../types/servicesType';
 import type { Operator } from '../../operator/types/operatorType';
+import { useToast } from '../../../shared/providers/ToastProvider';
 
 interface SelectedService extends MasterService {
     selectedOperatorId: number;
@@ -15,6 +16,7 @@ interface SelectedService extends MasterService {
 }
 
 export default function ServicesPage() {
+    const { showToast } = useToast();
     const [masterServices, setMasterServices] = useState<MasterService[]>([]);
     const [operators, setOperators] = useState<Operator[]>([]);
     const [loading, setLoading] = useState(true);
@@ -105,10 +107,10 @@ export default function ServicesPage() {
             setCashAmount('');
             setTransferAmount('');
 
-            alert('Servicios registrados con éxito');
+            showToast('Servicios registrados con éxito', 'success');
         } catch (error: any) {
             console.error('Error al procesar registro:', error);
-            alert('Error: ' + (error.response?.data?.error || error.message));
+            showToast('Error: ' + (error.response?.data?.error || error.message), 'error');
         } finally {
             setProcessing(false);
         }
