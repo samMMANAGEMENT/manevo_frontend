@@ -4,9 +4,11 @@ import { Button } from '../../../shared/components/ui/Button';
 import { Input } from '../../../shared/components/ui/Input';
 import { Select } from '../../../shared/components/ui/Select';
 import authService from '../services/authService';
+import { useAuth } from '../../../shared/providers/AuthProvider';
 
 const RegisterPage: React.FC = () => {
     const navigate = useNavigate();
+    const { login } = useAuth();
     const [step, setStep] = useState(1);
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
@@ -55,8 +57,8 @@ const RegisterPage: React.FC = () => {
                 phone: formData.mobileNumber,
             });
 
-            if (response.data.token) {
-                localStorage.setItem('token', response.data.token);
+            if (response.token && response.user) {
+                login(response.user, response.token);
                 handleNavigate('/app/dashboard');
             }
         } catch (error) {
