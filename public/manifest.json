@@ -1,0 +1,24 @@
+{
+  "name": "Manevo - Gestión de Operaciones",
+  "short_name": "Manevo",
+  "description": "Seamless control and infinite operational flow. Gestión integral de nóminas, servicios, gastos y conciliación contable.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#111817",
+  "theme_color": "#13ECDA",
+  "icons": [
+    {
+      "src": "/logo-bg-green.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
