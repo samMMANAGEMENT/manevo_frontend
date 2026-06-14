@@ -5,11 +5,13 @@ export interface PlatformUser {
     name: string;
     email: string;
     created_at: string;
-    entity: {
-        id: number;
-        name: string;
-        description: string;
-    } | null;
+}
+
+export interface Workspace {
+    id: number;
+    name: string;
+    description: string | null;
+    created_at: string;
     plan: {
         id: number;
         name: string;
@@ -18,6 +20,7 @@ export interface PlatformUser {
         end_date: string | null;
         status: string;
     } | null;
+    users: PlatformUser[];
 }
 
 export interface SaaSModule {
@@ -38,8 +41,8 @@ export interface SaaSPlan {
     modules?: SaaSModule[];
 }
 
-const getPlatformUsers = async (): Promise<PlatformUser[]> => {
-    const response = await api.get('/auth/saas-admin/usuarios');
+const getPlatformWorkspaces = async (): Promise<Workspace[]> => {
+    const response = await api.get('/auth/saas-admin/workspaces');
     return response.data;
 };
 
@@ -57,7 +60,7 @@ const modifyEntityPlan = async (entityId: number, planId: number): Promise<any> 
 };
 
 export default {
-    getPlatformUsers,
+    getPlatformWorkspaces,
     getSaaSPlans,
     modifyEntityPlan,
 };

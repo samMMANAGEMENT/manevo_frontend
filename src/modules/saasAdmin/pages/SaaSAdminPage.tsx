@@ -1,19 +1,30 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '../../../shared/providers/AuthProvider';
-import saasAdminService, { type PlatformUser, type SaaSPlan } from '../services/saasAdminService';
+import { Modal } from '../../../shared/components/ui/Modal';
+import saasAdminService, { type Workspace, type SaaSPlan } from '../services/saasAdminService';
 
 export default function SaaSAdminPage() {
     const { user } = useAuth();
-    const [users, setUsers] = useState<PlatformUser[]>([]);
+    const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
     const [plans, setPlans] = useState<SaaSPlan[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [selectedUser, setSelectedUser] = useState<PlatformUser | null>(null);
+    
+    // Paginación
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 10;
+
+    // Workspace seleccionado para ver detalles de usuarios
+    const [selectedWorkspaceDetail, setSelectedWorkspaceDetail] = useState<Workspace | null>(null);
+
+    // Workspace seleccionado para cambiar plan (Modal)
+    const [selectedWorkspaceForPlan, setSelectedWorkspaceForPlan] = useState<Workspace | null>(null);
     const [selectedPlanId, setSelectedPlanId] = useState<number | 'none'>('none');
+    
     const [updating, setUpdating] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-    // Seguridad estricta en el cliente (también forzada en el backend)
+    // Seguridad estricta en el cliente
     const isSuperAdmin = user?.email === 'sapinedal05@outlook.com';
 
     useEffect(() => {
@@ -22,12 +33,17 @@ export default function SaaSAdminPage() {
         const fetchData = async () => {
             try {
                 setLoading(true);
-                const [usersData, plansData] = await Promise.all([
-                    saasAdminService.getPlatformUsers(),
+                const [workspacesData, plansData] = await Promise.all([
+                    saasAdminService.getPlatformWorkspaces(),
                     saasAdminService.getSaaSPlans(),
                 ]);
-                setUsers(usersData);
+                setWorkspaces(workspacesData);
                 setPlans(plansData);
+
+                // Seleccionar el primero por defecto para detalles
+                if (workspacesData.length > 0) {
+                    setSelectedWorkspaceDetail(workspacesData[0]);
+                }
             } catch (err: any) {
                 console.error(err);
                 setError(err.response?.data?.message || 'Error al cargar los datos del panel.');
@@ -54,34 +70,53 @@ export default function SaaSAdminPage() {
         );
     }
 
-    const handleOpenChangePlan = (pUser: PlatformUser) => {
-        setSelectedUser(pUser);
-        setSelectedPlanId(pUser.plan?.id || 'none');
+    // Paginación lógica
+    const totalPages = Math.ceil(workspaces.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const currentWorkspaces = workspaces.slice(startIndex, startIndex + itemsPerPage);
+
+    const handlePageChange = (page: number) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+        }
+    };
+
+    const handleOpenChangePlan = (workspace: Workspace, e: React.MouseEvent) => {
+        e.stopPropagation(); // Evitar seleccionar para detalles
+        setSelectedWorkspaceForPlan(workspace);
+        setSelectedPlanId(workspace.plan?.id || 'none');
         setSuccessMessage(null);
     };
 
     const handleCloseModal = () => {
-        setSelectedUser(null);
+        setSelectedWorkspaceForPlan(null);
         setSelectedPlanId('none');
+        setSuccessMessage(null);
     };
 
     const handleChangePlanSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!selectedUser || !selectedUser.entity || selectedPlanId === 'none') return;
+        if (!selectedWorkspaceForPlan || selectedPlanId === 'none') return;
 
         try {
             setUpdating(true);
             setError(null);
-            await saasAdminService.modifyEntityPlan(selectedUser.entity.id, Number(selectedPlanId));
+            await saasAdminService.modifyEntityPlan(selectedWorkspaceForPlan.id, Number(selectedPlanId));
             
-            // Recargar lista de usuarios
-            const updatedUsers = await saasAdminService.getPlatformUsers();
-            setUsers(updatedUsers);
+            // Recargar datos
+            const updatedWorkspaces = await saasAdminService.getPlatformWorkspaces();
+            setWorkspaces(updatedWorkspaces);
 
-            setSuccessMessage(`Plan de ${selectedUser.name} actualizado con éxito.`);
+            // Actualizar detalle si es el mismo workspace
+            if (selectedWorkspaceDetail && selectedWorkspaceDetail.id === selectedWorkspaceForPlan.id) {
+                const newDetail = updatedWorkspaces.find(w => w.id === selectedWorkspaceForPlan.id);
+                if (newDetail) setSelectedWorkspaceDetail(newDetail);
+            }
+
+            setSuccessMessage(`Plan de ${selectedWorkspaceForPlan.name} actualizado con éxito.`);
             setTimeout(() => {
                 handleCloseModal();
-            }, 1500);
+            }, 1200);
         } catch (err: any) {
             console.error(err);
             setError(err.response?.data?.message || 'Error al actualizar el plan.');
@@ -122,79 +157,137 @@ export default function SaaSAdminPage() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8 items-start">
                 
-                {/* Tabla de Usuarios Registrados */}
-                <div className="lg:col-span-2 bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden">
-                    <div className="px-6 py-5 border-b border-slate-50 flex items-center justify-between">
-                        <div>
-                            <h2 className="text-lg font-black text-manevo-slate">Workspaces Activos</h2>
-                            <p className="text-xs text-slate-400 font-semibold mt-0.5">Usuarios registrados y planes asociados.</p>
+                {/* Columna Izquierda: Tabla de Workspaces Paginados */}
+                <div className="lg:col-span-2 space-y-6">
+                    <div className="bg-white rounded-3xl border border-slate-100 shadow-xl overflow-hidden">
+                        <div className="px-6 py-5 border-b border-slate-50 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-lg font-black text-manevo-slate">Workspaces Activos</h2>
+                                <p className="text-xs text-slate-400 font-semibold mt-0.5">Listado de empresas y sus planes. Haz click para ver usuarios.</p>
+                            </div>
+                            <span className="px-2.5 py-1 bg-slate-50 text-slate-500 rounded-lg text-xs font-black">
+                                {workspaces.length} Registros
+                            </span>
                         </div>
-                        <span className="px-2.5 py-1 bg-slate-50 text-slate-500 rounded-lg text-xs font-black">
-                            {users.length} Registros
-                        </span>
-                    </div>
 
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="bg-slate-50/50 text-[10px] text-slate-400 font-black uppercase tracking-wider">
-                                    <th className="px-6 py-4">Usuario</th>
-                                    <th className="px-6 py-4">Workspace</th>
-                                    <th className="px-6 py-4 text-center">Plan Activo</th>
-                                    <th className="px-6 py-4 text-right">Acción</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-50 text-sm">
-                                {users.map(u => (
-                                    <tr key={u.id} className="hover:bg-slate-50/30 transition-all">
-                                        <td className="px-6 py-4">
-                                            <div className="flex flex-col">
-                                                <span className="font-bold text-manevo-slate">{u.name}</span>
-                                                <span className="text-xs text-slate-400 font-medium">{u.email}</span>
-                                            </div>
-                                        </td>
-                                        <td className="px-6 py-4">
-                                            <span className="font-medium text-slate-600">
-                                                {u.entity?.name || 'Sin Workspace'}
-                                            </span>
-                                        </td>
-                                        <td className="px-6 py-4 text-center">
-                                            {u.plan ? (
-                                                <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider
-                                                    ${u.plan.slug === 'free' ? 'bg-slate-100 text-slate-600 border border-slate-200' : ''}
-                                                    ${u.plan.slug === 'goo' ? 'bg-cyan-50 text-cyan-600 border border-cyan-100' : ''}
-                                                    ${u.plan.slug === 'essential' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : ''}
-                                                    ${u.plan.slug === 'business' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : ''}
-                                                `}>
-                                                    {u.plan.name}
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="bg-slate-50/50 text-[10px] text-slate-400 font-black uppercase tracking-wider">
+                                        <th className="px-6 py-4">Workspace</th>
+                                        <th className="px-6 py-4 text-center">Plan Activo</th>
+                                        <th className="px-6 py-4 text-center">Usuarios</th>
+                                        <th className="px-6 py-4 text-right">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-50 text-sm">
+                                    {currentWorkspaces.map(w => (
+                                        <tr 
+                                            key={w.id} 
+                                            onClick={() => setSelectedWorkspaceDetail(w)}
+                                            className={`cursor-pointer transition-all hover:bg-slate-50/50 ${selectedWorkspaceDetail?.id === w.id ? 'bg-manevo-teal/5 font-semibold' : ''}`}
+                                        >
+                                            <td className="px-6 py-4">
+                                                <div className="flex flex-col">
+                                                    <span className="font-bold text-manevo-slate">{w.name}</span>
+                                                    <span className="text-xs text-slate-400 font-medium">{w.description || 'Sin descripción'}</span>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                {w.plan ? (
+                                                    <span className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider
+                                                        ${w.plan.slug === 'free' ? 'bg-slate-100 text-slate-600 border border-slate-200' : ''}
+                                                        ${w.plan.slug === 'goo' ? 'bg-cyan-50 text-cyan-600 border border-cyan-100' : ''}
+                                                        ${w.plan.slug === 'essential' ? 'bg-indigo-50 text-indigo-600 border border-indigo-100' : ''}
+                                                        ${w.plan.slug === 'business' ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' : ''}
+                                                    `}>
+                                                        {w.plan.name}
+                                                    </span>
+                                                ) : (
+                                                    <span className="inline-block px-2.5 py-1 bg-red-50 text-red-600 border border-red-100 rounded-full text-[10px] font-extrabold uppercase tracking-wider">
+                                                        Sin Plan
+                                                    </span>
+                                                )}
+                                            </td>
+                                            <td className="px-6 py-4 text-center">
+                                                <span className="inline-flex items-center gap-1 px-2.5 py-1 bg-slate-100 text-slate-500 rounded-lg text-xs font-black">
+                                                    <span className="material-symbols-outlined text-[14px]">group</span>
+                                                    {w.users.length}
                                                 </span>
-                                            ) : (
-                                                <span className="inline-block px-2.5 py-1 bg-red-50 text-red-600 border border-red-100 rounded-full text-[10px] font-extrabold uppercase tracking-wider">
-                                                    Sin Plan
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="px-6 py-4 text-right">
-                                            {u.entity ? (
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
                                                 <button
-                                                    onClick={() => handleOpenChangePlan(u)}
+                                                    onClick={(e) => handleOpenChangePlan(w, e)}
                                                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-manevo-teal/10 hover:bg-manevo-teal text-manevo-teal hover:text-black font-black text-xs rounded-xl transition-all cursor-pointer border border-manevo-teal/20"
                                                 >
                                                     <span className="material-symbols-outlined text-[14px]">edit_calendar</span>
                                                     Cambiar Plan
                                                 </button>
-                                            ) : (
-                                                <span className="text-xs text-slate-400 font-semibold italic">N/A</span>
-                                            )}
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Paginación */}
+                        {totalPages > 1 && (
+                            <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-50 flex items-center justify-between">
+                                <span className="text-xs text-slate-400 font-bold">
+                                    Página {currentPage} de {totalPages}
+                                </span>
+                                <div className="flex gap-2">
+                                    <button
+                                        disabled={currentPage === 1}
+                                        onClick={() => handlePageChange(currentPage - 1)}
+                                        className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all disabled:opacity-40 disabled:hover:bg-white cursor-pointer"
+                                    >
+                                        Anterior
+                                    </button>
+                                    <button
+                                        disabled={currentPage === totalPages}
+                                        onClick={() => handlePageChange(currentPage + 1)}
+                                        className="px-3 py-1.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-xs font-bold hover:bg-slate-50 transition-all disabled:opacity-40 disabled:hover:bg-white cursor-pointer"
+                                    >
+                                        Siguiente
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
+
+                    {/* Detalle de Usuarios Asociados */}
+                    {selectedWorkspaceDetail && (
+                        <div className="bg-white rounded-3xl border border-slate-100 shadow-xl p-6 space-y-4 animate-fade-in">
+                            <div>
+                                <h3 className="text-lg font-black text-manevo-slate">
+                                    Usuarios en: <span className="text-manevo-teal font-extrabold">{selectedWorkspaceDetail.name}</span>
+                                </h3>
+                                <p className="text-xs text-slate-400 font-semibold mt-0.5">Personas registradas en este espacio de trabajo.</p>
+                            </div>
+
+                            {selectedWorkspaceDetail.users.length === 0 ? (
+                                <p className="text-sm text-slate-400 italic">No hay usuarios registrados en este workspace.</p>
+                            ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    {selectedWorkspaceDetail.users.map(u => (
+                                        <div key={u.id} className="p-4 rounded-2xl bg-slate-50/50 border border-slate-100 flex items-center gap-3">
+                                            <div className="size-10 rounded-full bg-manevo-teal/10 text-manevo-teal flex items-center justify-center font-bold text-sm">
+                                                {u.name.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="text-sm font-bold text-manevo-slate truncate">{u.name}</p>
+                                                <p className="text-xs text-slate-400 truncate font-medium">{u.email}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
 
-                {/* Leyenda de Planes */}
+                {/* Columna Derecha: Leyenda de Planes */}
                 <div className="bg-white rounded-3xl border border-slate-100 shadow-xl p-6 space-y-6">
                     <div>
                         <h2 className="text-lg font-black text-manevo-slate">Estructura de Planes</h2>
@@ -233,67 +326,65 @@ export default function SaaSAdminPage() {
 
             </div>
 
-            {/* Modal para Modificar Plan */}
-            {selectedUser && (
-                <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-                    <div className="bg-white w-full max-w-md rounded-3xl border border-slate-100 shadow-2xl overflow-hidden p-6 space-y-6 relative">
-                        <button
-                            onClick={handleCloseModal}
-                            className="absolute top-4 right-4 p-2 text-slate-400 hover:text-rose-500 transition-colors"
-                        >
-                            <span className="material-symbols-outlined">close</span>
-                        </button>
-
-                        <div className="space-y-1">
-                            <h3 className="text-xl font-black text-manevo-slate">Modificar Suscripción</h3>
-                            <p className="text-xs text-slate-400 font-semibold">Cambiar el plan de acceso para {selectedUser.name}</p>
-                        </div>
-
+            {/* Modal Global de Modificar Plan (Conecta vía React Portal fuera del Layout) */}
+            <Modal
+                isOpen={selectedWorkspaceForPlan !== null}
+                onClose={handleCloseModal}
+                title="Modificar Plan de Suscripción"
+            >
+                {selectedWorkspaceForPlan && (
+                    <div className="space-y-6">
                         {successMessage ? (
-                            <div className="bg-emerald-50 border border-emerald-100 text-emerald-600 px-4 py-3 rounded-2xl text-sm font-semibold flex items-center gap-2">
-                                <span className="material-symbols-outlined">check_circle</span>
+                            <div className="bg-emerald-50 border border-emerald-100 text-emerald-600 px-4 py-4 rounded-2xl text-sm font-semibold flex items-center gap-3 animate-scale-in">
+                                <span className="material-symbols-outlined text-[22px]">check_circle</span>
                                 {successMessage}
                             </div>
                         ) : (
-                            <form onSubmit={handleChangePlanSubmit} className="space-y-4">
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black uppercase text-slate-400">Workspace</label>
-                                    <input
-                                        type="text"
-                                        readOnly
-                                        value={selectedUser.entity?.name || ''}
-                                        className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-100 font-bold text-slate-500 text-sm outline-none"
-                                    />
+                            <form onSubmit={handleChangePlanSubmit} className="space-y-5">
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Workspace Seleccionado</label>
+                                    <div className="w-full px-4 py-3 rounded-2xl bg-slate-50 border border-slate-100 font-bold text-slate-600 text-sm">
+                                        {selectedWorkspaceForPlan.name}
+                                    </div>
                                 </div>
 
-                                <div className="space-y-2">
-                                    <label className="text-xs font-black uppercase text-slate-400">Seleccionar Plan</label>
+                                <div className="space-y-1.5">
+                                    <label className="text-[10px] font-black uppercase text-slate-400 tracking-wider">Plan de Suscripción</label>
                                     <select
                                         value={selectedPlanId}
                                         onChange={(e) => setSelectedPlanId(e.target.value === 'none' ? 'none' : Number(e.target.value))}
-                                        className="w-full px-4 py-3 rounded-2xl bg-white border border-slate-200 font-semibold text-slate-700 text-sm outline-none focus:border-manevo-teal transition-colors"
+                                        className="w-full px-4 py-3 rounded-2xl bg-white border border-slate-200 font-bold text-slate-700 text-sm outline-none focus:border-manevo-teal focus:ring-1 focus:ring-manevo-teal transition-all"
                                     >
-                                        <option value="none" disabled>Seleccionar un plan...</option>
+                                        <option value="none" disabled>Selecciona un plan...</option>
                                         {plans.map(p => (
                                             <option key={p.id} value={p.id}>
-                                                {p.name} - ${parseFloat(p.price.toString()).toFixed(2)} (Límite: {p.max_users === 0 || p.max_users === null || p.max_users === undefined ? 'Ilimitado' : `${p.max_users} usr`})
+                                                {p.name} — ${parseFloat(p.price.toString()).toFixed(2)} / mes ({p.max_users === 0 ? 'Sin límite de usuarios' : `Límite: ${p.max_users} usuarios`})
                                             </option>
                                         ))}
                                     </select>
                                 </div>
 
-                                <button
-                                    type="submit"
-                                    disabled={updating || selectedPlanId === 'none'}
-                                    className="w-full py-3 bg-manevo-slate hover:bg-manevo-teal text-white hover:text-black font-black text-sm rounded-2xl transition-all cursor-pointer shadow-lg disabled:opacity-50"
-                                >
-                                    {updating ? 'Guardando Cambios...' : 'Guardar y Actualizar'}
-                                </button>
+                                <div className="flex gap-3 pt-2">
+                                    <button
+                                        type="button"
+                                        onClick={handleCloseModal}
+                                        className="flex-1 py-3 border border-slate-200 text-slate-500 hover:bg-slate-50 hover:text-manevo-slate font-bold text-sm rounded-2xl transition-all cursor-pointer"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={updating || selectedPlanId === 'none'}
+                                        className="flex-1 py-3 bg-manevo-slate hover:bg-manevo-teal text-white hover:text-black font-black text-sm rounded-2xl transition-all cursor-pointer shadow-lg disabled:opacity-50"
+                                    >
+                                        {updating ? 'Guardando...' : 'Guardar Cambios'}
+                                    </button>
+                                </div>
                             </form>
                         )}
                     </div>
-                </div>
-            )}
+                )}
+            </Modal>
         </div>
     );
 }
