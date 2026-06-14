@@ -14,6 +14,7 @@ import PaymentsPage from '../modules/payments/pages/PaymentsPage';
 
 import SettingsPage from '../modules/settings/pages/SettingsPage';
 import ReportsPage from '../modules/reports/pages/ReportsPage';
+import SaaSAdminPage from '../modules/saasAdmin/pages/SaaSAdminPage';
 
 export const router = createBrowserRouter([
     {
@@ -50,7 +51,7 @@ export const router = createBrowserRouter([
             { path: 'integrations', element: <div className="p-8"><h1 className="text-4xl text-black">Integraciones</h1><p className="text-gray-500 mt-4">Próximamente...</p></div> },
             { path: 'reports', element: <ReportsPage /> },
             { path: 'settings_advanced', element: <SettingsPage /> },
-            { path: 'admin', element: <div className="p-8"><h1 className="text-4xl text-black">Administración</h1><p className="text-gray-500 mt-4">Próximamente...</p></div> },
+            { path: 'admin', element: <SaaSAdminPage /> },
             { path: 'api_access', element: <div className="p-8"><h1 className="text-4xl text-black">API Access</h1><p className="text-gray-500 mt-4">Próximamente...</p></div> },
             { path: 'inventory', element: <InventoryPage /> },
             { path: 'billing', element: <BillingPage /> },
