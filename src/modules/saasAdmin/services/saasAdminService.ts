@@ -35,6 +35,7 @@ export interface SaaSPlan {
     max_users: number;
     is_default: boolean;
     modulos: SaaSModule[];
+    modules?: SaaSModule[];
 }
 
 const getPlatformUsers = async (): Promise<PlatformUser[]> => {

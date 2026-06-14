@@ -213,13 +213,13 @@ export default function SaaSAdminPage() {
                                 
                                 <div className="flex items-center gap-1.5 text-xs text-slate-500 font-bold">
                                     <span className="material-symbols-outlined text-[16px] text-manevo-teal">group</span>
-                                    Límite: {p.max_users === 0 ? 'Usuarios Ilimitados' : `Máx. ${p.max_users} usuario(s)`}
+                                    Límite: {p.max_users === 0 || p.max_users === null || p.max_users === undefined ? 'Usuarios Ilimitados' : `Máx. ${p.max_users} usuario(s)`}
                                 </div>
 
                                 <div className="space-y-1">
                                     <span className="text-[10px] uppercase font-black tracking-wider text-slate-400">Módulos habilitados:</span>
                                     <div className="flex flex-wrap gap-1 mt-1">
-                                        {p.modulos.map(m => (
+                                        {(p.modulos || p.modules || []).map(m => (
                                             <span key={m.id} className="text-[9px] font-bold bg-white text-slate-500 border border-slate-100 px-2 py-0.5 rounded-md">
                                                 {m.name}
                                             </span>
@@ -276,7 +276,7 @@ export default function SaaSAdminPage() {
                                         <option value="none" disabled>Seleccionar un plan...</option>
                                         {plans.map(p => (
                                             <option key={p.id} value={p.id}>
-                                                {p.name} - ${parseFloat(p.price.toString()).toFixed(2)} (Límite: {p.max_users === 0 ? 'Ilimitado' : `${p.max_users} usr`})
+                                                {p.name} - ${parseFloat(p.price.toString()).toFixed(2)} (Límite: {p.max_users === 0 || p.max_users === null || p.max_users === undefined ? 'Ilimitado' : `${p.max_users} usr`})
                                             </option>
                                         ))}
                                     </select>
