@@ -97,19 +97,32 @@ const RegisterPage: React.FC = () => {
                     </p>
                 </div>
 
-                <div className="relative z-10 flex gap-4">
-                    <div className="flex -space-x-3">
-                        {[1, 2, 3].map((i) => (
-                            <div key={i} className="w-10 h-10 rounded-full border-2 border-[#0c1110] bg-gray-800 flex items-center justify-center overflow-hidden">
-                                <img
-                                    alt="User"
-                                    src="/src/assets/images/avatar-1.png"
-                                    className="w-full h-full object-cover"
-                                />
+                <div className="relative z-10 flex flex-col gap-5">
+                    <div className="flex items-center gap-3">
+                        <div className="w-11 h-11 rounded-full border-2 border-manevo-teal/40 overflow-hidden shrink-0 shadow-[0_0_12px_rgba(19,236,218,0.2)]">
+                            <img
+                                alt="María C — cejasmariac"
+                                src="/Maria-C-Logo.png"
+                                className="w-full h-full object-cover"
+                            />
+                        </div>
+                        <div>
+                            <p className="text-white text-sm font-bold leading-tight">María C · <a href="https://www.instagram.com/cejasmariac/" target="_blank" rel="noopener noreferrer" className="text-manevo-teal hover:underline">@cejasmariac</a></p>
+                            <p className="text-gray-500 text-xs font-medium mt-0.5">Ya gestiona su negocio con manevo</p>
+                        </div>
+                    </div>
+                    <div className="flex flex-wrap gap-3">
+                        {[
+                            { icon: "bolt", label: "Sin tarjeta de crédito" },
+                            { icon: "schedule", label: "Listo en 5 minutos" },
+                            { icon: "lock", label: "Datos 100% seguros" },
+                        ].map((item, i) => (
+                            <div key={i} className="flex items-center gap-1.5 text-gray-500 text-xs font-bold">
+                                <span className="material-symbols-outlined text-manevo-teal text-[14px]">{item.icon}</span>
+                                {item.label}
                             </div>
                         ))}
                     </div>
-                    <p className="text-gray-400 text-sm flex items-center">Confiado por más de 5,000 equipos en todo el mundo</p>
                 </div>
             </div>
 

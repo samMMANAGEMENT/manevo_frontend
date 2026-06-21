@@ -412,7 +412,11 @@ function App() {
                 </div>
 
                 <button
-                  onClick={() => navigate('/auth/register')}
+                  onClick={() =>
+                    plan.slug === 'business'
+                      ? window.open('https://wa.me/573236374624', '_blank')
+                      : navigate('/auth/register')
+                  }
                   className={`w-full py-3 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all
                     ${plan.highlight
                       ? 'bg-manevo-slate text-manevo-teal hover:bg-manevo-slate/80'
@@ -433,22 +437,44 @@ function App() {
 
       {/* Testimonial */}
       <section className="py-28 px-6 bg-[#090e0d] border-y border-white/5">
-        <div className="max-w-4xl mx-auto text-center space-y-12">
-          <div className="space-y-2">
-            {[1,2,3,4,5].map(s => (
-              <span key={s} className="inline-block text-manevo-teal text-xl mr-1">★</span>
-            ))}
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-16 space-y-2">
+            <p className="text-[10px] font-black text-manevo-teal uppercase tracking-widest">Negocios reales que usan manevo</p>
+            <h2 className="text-4xl md:text-5xl font-black tracking-tightest">Ya hay quién confía en esto.</h2>
           </div>
-          <blockquote className="text-3xl md:text-4xl font-black text-white tracking-tightest leading-tight">
-            "Antes cerraba el día y tardaba 40 minutos sumando comisiones en papel. Ahora abro manevo y el número ya está listo. Eso solo ya valió la pena."
-          </blockquote>
-          <div className="flex flex-col items-center gap-4">
-            <div className="size-16 rounded-full border-2 border-manevo-teal/30 p-1 bg-gray-800 flex items-center justify-center">
-              <span className="material-symbols-outlined text-manevo-teal text-3xl!">person</span>
+
+          <div className="flex flex-col md:flex-row items-center gap-10 bg-white/3 border border-white/8 rounded-[40px] p-10 md:p-14">
+            <div className="shrink-0 flex flex-col items-center gap-4">
+              <div className="size-28 rounded-3xl overflow-hidden border-2 border-manevo-teal/30 shadow-[0_0_30px_rgba(19,236,218,0.15)]">
+                <img
+                  src="/Maria-C-Logo.png"
+                  alt="María C — Cejas Maria C"
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="text-center">
+                <p className="text-white font-black text-lg">María C</p>
+                <a
+                  href="https://www.instagram.com/cejasmariac/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-manevo-teal text-xs font-bold hover:underline flex items-center justify-center gap-1 mt-1"
+                >
+                  <span className="material-symbols-outlined text-[14px]">open_in_new</span>
+                  @cejasmariac
+                </a>
+              </div>
             </div>
-            <div>
-              <p className="text-lg font-black text-white">Andrea Martínez</p>
-              <p className="text-sm font-bold text-manevo-teal uppercase tracking-[0.2em]">Dueña · Estética & Spa Zen, Medellín</p>
+
+            <div className="flex-1 space-y-6">
+              <div className="flex gap-1">
+                {[1,2,3,4,5].map(s => (
+                  <span key={s} className="text-manevo-teal text-xl">★</span>
+                ))}
+              </div>
+              <blockquote className="text-2xl md:text-3xl font-black text-white tracking-tightest leading-tight">
+                "manevo me tiene todo organizado: las comisiones, la caja del día, el inventario. Ya no tengo que andar con papel ni con el celular sumando."
+              </blockquote>
             </div>
           </div>
         </div>
@@ -501,9 +527,14 @@ function App() {
             <Button onClick={() => navigate('/auth/register')} className="px-12 py-5 text-base font-black shadow-[0_0_30px_rgba(19,236,218,0.2)]">
               CREAR CUENTA GRATIS
             </Button>
-            <button className="px-12 py-5 text-base font-black border border-white/10 rounded-xl text-white hover:bg-white/5 transition-colors">
+            <a
+              href="https://wa.me/573236374624"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-12 py-5 text-base font-black border border-white/10 rounded-xl text-white hover:bg-white/5 transition-colors"
+            >
               HABLAR CON VENTAS
-            </button>
+            </a>
           </div>
           <p className="text-xs font-bold text-gray-600 uppercase tracking-widest">Sin tarjeta · Sin contratos · Sin complicaciones</p>
         </div>
